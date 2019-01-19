@@ -10,7 +10,7 @@ type Command struct {
 	Name    string
 	Aliases []string
 
-	Run func(args []string)
+	Run func(p Prompt, args []string)
 
 	Desc  string
 	Usage string

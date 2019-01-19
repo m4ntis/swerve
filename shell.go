@@ -8,13 +8,29 @@ import (
 type Shell struct {
 	cmds   []Command
 	hashed map[string]Command
+
+	p Prompt
 }
 
 func New() *Shell {
 	return &Shell{}
 }
 
+// Run runs the Shell indefinitely, reading a line from the prompt and running
+// the appropriate command with it's arguments.
 func (s *Shell) Run() {
+	for {
+		line := s.Readline()
+		args := strings.Fields(line)
+
+		cmd, ok := s.hashed[args[0]]
+		if !ok {
+			s.p.Printf("%s isn't a valid command, run 'help' for a list\n", line)
+			continue
+		}
+
+		cmd.Run(p, args[1:])
+	}
 }
 
 // Add adds commands to the Shell's command list.
@@ -26,6 +42,11 @@ func (s *Shell) Add(cmds ...Command) {
 		s.sortedAdd(s.cmds, cmd)
 		s.hash(cmd)
 	}
+}
+
+// SetPrompt sets the Shell's Prompt.
+func (s *Shell) SetPrompt(p Prompt) {
+	s.p = p
 }
 
 // sortedAdd adds a single Command to the Shell's command list in alphabetical
