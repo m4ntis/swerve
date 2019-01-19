@@ -3,6 +3,8 @@ package swerve
 import (
 	"fmt"
 	"io"
+	"os"
+	"os/exec"
 
 	"github.com/peterh/liner"
 )
@@ -40,6 +42,13 @@ func (t *TerminalPrompt) ReadPassword() string {
 	panicOnNonEOFErr(err)
 
 	return pass
+}
+
+func (t *TerminalPrompt) Clear() {
+	// TODO: support windows :(
+	cmd := exec.Command("clear")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
 }
 
 func panicOnNonEOFErr(err error) {
