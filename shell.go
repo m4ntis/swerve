@@ -7,6 +7,7 @@ import (
 	"github.com/peterh/liner"
 )
 
+// Shell represents an interactive shell, holding a list of given commands.
 type Shell struct {
 	cmds   []Command
 	hashed map[string]Command
@@ -15,19 +16,24 @@ type Shell struct {
 	lastLine string
 }
 
+// New returns a Shell with a terminal Prompt, with basic command name
+// completion.
 func New(prompt string) *Shell {
-	return &shell{
-		cmds:   []command{},
-		hashed: map[string]command{},
-
-		p: s.defaultprompt(prompt),
+	s := &Shell{
+		cmds:   []Command{},
+		hashed: map[string]Command{},
 	}
+
+	s.p = s.defaultPrompt(prompt)
+
+	return s
 }
 
-func NewWithPrompt(p Prompt) {
-	return &shell{
-		cmds:   []command{},
-		hashed: map[string]command{},
+// NewWithPrompt returns a Shell with a specified Prompt.
+func NewWithPrompt(p Prompt) *Shell {
+	return &Shell{
+		cmds:   []Command{},
+		hashed: map[string]Command{},
 
 		p: p,
 	}
@@ -37,7 +43,7 @@ func NewWithPrompt(p Prompt) {
 // the appropriate command with it's arguments.
 func (s *Shell) Run() {
 	for {
-		line := s.Readline()
+		line := s.p.Readline()
 
 		// Handle empty lines as a repeat of last command
 		if line == "" {
@@ -47,7 +53,7 @@ func (s *Shell) Run() {
 
 			line = s.lastLine
 		}
-		lastLine = line
+		s.lastLine = line
 
 		// Parse line
 		args := strings.Fields(line)
@@ -58,7 +64,7 @@ func (s *Shell) Run() {
 		}
 
 		// Run command
-		cmd.Run(p, args[1:])
+		cmd.Run(s.p, args[1:])
 	}
 }
 
@@ -68,7 +74,7 @@ func (s *Shell) Run() {
 // command is added.
 func (s *Shell) Add(cmds ...Command) {
 	for _, cmd := range cmds {
-		s.sortedAdd(s.cmds, cmd)
+		s.sortedAdd(cmd)
 		s.hash(cmd)
 	}
 }
@@ -78,7 +84,7 @@ func (s *Shell) Add(cmds ...Command) {
 func (s *Shell) sortedAdd(cmd Command) {
 	for i, c := range s.cmds {
 		if c.Name > cmd.Name {
-			s.cmds = append(s.cmds[:i], append([]Command{cmd}, s.cmds[i:]...))
+			s.cmds = append(s.cmds[:i], append([]Command{cmd}, s.cmds[i:]...)...)
 			return
 		}
 	}
@@ -86,7 +92,7 @@ func (s *Shell) sortedAdd(cmd Command) {
 
 // hash adds references to a command by it's name and aliases.
 func (s *Shell) hash(cmd Command) {
-	names := append(cmd.Aliases, name)
+	names := append(cmd.Aliases, cmd.Name)
 
 	for _, name := range names {
 		_, ok := s.hashed[name]
@@ -105,7 +111,7 @@ func (s *Shell) defaultPrompt(prompt string) Prompt {
 	l.SetCompleter(func(line string) (opts []string) {
 		for _, cmd := range s.cmds {
 			if strings.HasPrefix(cmd.Name, strings.ToLower(line)) {
-				opts = append(opts, n)
+				opts = append(opts, cmd.Name)
 			}
 		}
 		return opts
@@ -121,8 +127,10 @@ func (s *Shell) help() string {
 
 	longest := s.longestTitleLength()
 	for _, cmd := range s.cmds {
+		title := cmd.Title()
+
 		help += fmt.Sprintf("    %s %s %s\n",
-			cmd.Title(),
+			title,
 			strings.Repeat("-", longest-len(title)+1),
 			cmd.Desc)
 	}
