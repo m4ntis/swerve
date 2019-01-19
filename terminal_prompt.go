@@ -7,6 +7,7 @@ import (
 	"github.com/peterh/liner"
 )
 
+// TerminalPrompt is a simple terminal Prompt implementation.
 type TerminalPrompt struct {
 	prompt string
 
