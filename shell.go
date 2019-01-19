@@ -19,14 +19,7 @@ type Shell struct {
 // New returns a Shell with a terminal Prompt, with basic command name
 // completion.
 func New(prompt string) *Shell {
-	s := &Shell{
-		cmds:   []Command{},
-		hashed: map[string]Command{},
-	}
-
-	s.p = s.defaultPrompt(prompt)
-
-	return s
+	return NewWithPrompt(s.defaultPrompt(prompt))
 }
 
 // NewWithPrompt returns a Shell with a specified Prompt.
