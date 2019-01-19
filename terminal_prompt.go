@@ -41,7 +41,7 @@ func (t *TerminalPrompt) ReadPassword() string {
 	return pass
 }
 
-func panicOnErr(err error) {
+func panicOnNonEOFErr(err error) {
 	if err == io.EOF {
 		return
 	}
