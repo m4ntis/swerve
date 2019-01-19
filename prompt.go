@@ -12,4 +12,6 @@ type Prompt interface {
 
 	Readline() string
 	ReadPassword() string
+
+	Clear()
 }
