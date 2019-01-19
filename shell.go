@@ -14,50 +14,46 @@ type Shell struct {
 
 	p        Prompt
 	lastLine string
+
+	exitc chan struct{}
 }
 
 // New returns a Shell with a terminal Prompt, with basic command name
 // completion.
 func New(prompt string) *Shell {
-	return NewWithPrompt(s.defaultPrompt(prompt))
+	s := &Shell{
+		cmds:   []Command{},
+		hashed: map[string]Command{},
+	}
+
+	s.p = s.defaultPrompt(prompt)
+	s.Add(builtins(s)...)
+	return s
 }
 
 // NewWithPrompt returns a Shell with a specified Prompt.
 func NewWithPrompt(p Prompt) *Shell {
-	return &Shell{
+	s := &Shell{
 		cmds:   []Command{},
 		hashed: map[string]Command{},
 
 		p: p,
 	}
+
+	s.Add(builtins(s)...)
+	return s
 }
 
 // Run runs the Shell indefinitely, reading a line from the prompt and running
 // the appropriate command with it's arguments.
 func (s *Shell) Run() {
 	for {
-		line := s.p.Readline()
-
-		// Handle empty lines as a repeat of last command
-		if line == "" {
-			if s.lastLine == "" {
-				continue
-			}
-
-			line = s.lastLine
+		select {
+		case <-s.exitc:
+			return
+		default:
+			s.readCommand()
 		}
-		s.lastLine = line
-
-		// Parse line
-		args := strings.Fields(line)
-		cmd, ok := s.hashed[args[0]]
-		if !ok {
-			s.p.Printf("%s isn't a valid command, run 'help' for a list\n", line)
-			continue
-		}
-
-		// Run command
-		cmd.Run(s.p, args[1:])
 	}
 }
 
@@ -95,6 +91,31 @@ func (s *Shell) hash(cmd Command) {
 
 		s.hashed[name] = cmd
 	}
+}
+
+func (s *Shell) readCommand() {
+	line := s.p.Readline()
+
+	// Handle empty lines as a repeat of last command
+	if line == "" {
+		if s.lastLine == "" {
+			return
+		}
+
+		line = s.lastLine
+	}
+	s.lastLine = line
+
+	// Parse line
+	args := strings.Fields(line)
+	cmd, ok := s.hashed[args[0]]
+	if !ok {
+		s.p.Printf("%s isn't a valid command, run 'help' for a list\n", args[0])
+		return
+	}
+
+	// Run command
+	cmd.Run(s.p, args[1:])
 }
 
 // defaultPrompt creates a terminal prompt with basic command name completion.
