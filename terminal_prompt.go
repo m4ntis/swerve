@@ -28,6 +28,10 @@ func (t *TerminalPrompt) Readline() string {
 	line, err := t.l.Prompt(t.prompt)
 	panicOnNonEOFErr(err)
 
+	if line != "" {
+		t.l.AppendHistory(line)
+	}
+
 	return line
 }
 func (t *TerminalPrompt) ReadPassword() string {

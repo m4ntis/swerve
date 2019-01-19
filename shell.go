@@ -3,17 +3,34 @@ package swerve
 import (
 	"fmt"
 	"strings"
+
+	"github.com/peterh/liner"
 )
 
 type Shell struct {
 	cmds   []Command
 	hashed map[string]Command
 
-	p Prompt
+	p        Prompt
+	lastLine string
 }
 
-func New() *Shell {
-	return &Shell{}
+func New(prompt string) *Shell {
+	return &shell{
+		cmds:   []command{},
+		hashed: map[string]command{},
+
+		p: s.defaultprompt(prompt),
+	}
+}
+
+func NewWithPrompt(p Prompt) {
+	return &shell{
+		cmds:   []command{},
+		hashed: map[string]command{},
+
+		p: p,
+	}
 }
 
 // Run runs the Shell indefinitely, reading a line from the prompt and running
@@ -21,14 +38,26 @@ func New() *Shell {
 func (s *Shell) Run() {
 	for {
 		line := s.Readline()
-		args := strings.Fields(line)
 
+		// Handle empty lines as a repeat of last command
+		if line == "" {
+			if s.lastLine == "" {
+				continue
+			}
+
+			line = s.lastLine
+		}
+		lastLine = line
+
+		// Parse line
+		args := strings.Fields(line)
 		cmd, ok := s.hashed[args[0]]
 		if !ok {
 			s.p.Printf("%s isn't a valid command, run 'help' for a list\n", line)
 			continue
 		}
 
+		// Run command
 		cmd.Run(p, args[1:])
 	}
 }
@@ -42,11 +71,6 @@ func (s *Shell) Add(cmds ...Command) {
 		s.sortedAdd(s.cmds, cmd)
 		s.hash(cmd)
 	}
-}
-
-// SetPrompt sets the Shell's Prompt.
-func (s *Shell) SetPrompt(p Prompt) {
-	s.p = p
 }
 
 // sortedAdd adds a single Command to the Shell's command list in alphabetical
@@ -72,6 +96,22 @@ func (s *Shell) hash(cmd Command) {
 
 		s.hashed[name] = cmd
 	}
+}
+
+// defaultPrompt creates a terminal prompt with basic command name completion.
+func (s *Shell) defaultPrompt(prompt string) Prompt {
+	l := liner.NewLiner()
+
+	l.SetCompleter(func(line string) (opts []string) {
+		for _, cmd := range s.cmds {
+			if strings.HasPrefix(cmd.Name, strings.ToLower(line)) {
+				opts = append(opts, n)
+			}
+		}
+		return opts
+	})
+
+	return NewTerminalPrompt(prompt, l)
 }
 
 // help generates an alphabetically sorted, multi-line help string for the
