@@ -115,6 +115,9 @@ func (s *Shell) readCommand() {
 	}
 
 	// Run command
+	if cmd.ValidateArgs != nil && !cmd.ValidateArgs(args[1:]) {
+		return
+	}
 	cmd.Run(s.p, args[1:])
 }
 
