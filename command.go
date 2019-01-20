@@ -20,7 +20,7 @@ type Command struct {
 
 	// ValidateArgs is an optional function to validate a Commands arguments
 	// before being run.
-	ValidateArgs func(args []string) (ok bool)
+	ValidateArgs func(p Prompt, args []string) (ok bool)
 
 	// Desc is the command's shortest description. Desc is displayed when using
 	// the builtin 'help' command.
