@@ -24,6 +24,8 @@ func New(prompt string) *Shell {
 	s := &Shell{
 		cmds:   []Command{},
 		hashed: map[string]Command{},
+
+		exitc: make(chan struct{}),
 	}
 
 	s.p = s.defaultPrompt(prompt)
@@ -38,6 +40,8 @@ func NewWithPrompt(p Prompt) *Shell {
 		hashed: map[string]Command{},
 
 		p: p,
+
+		exitc: make(chan struct{}),
 	}
 
 	s.Add(builtins(s)...)
@@ -115,7 +119,7 @@ func (s *Shell) readCommand() {
 	}
 
 	// Run command
-	if cmd.ValidateArgs != nil && !cmd.ValidateArgs(args[1:]) {
+	if cmd.ValidateArgs != nil && !cmd.ValidateArgs(s.p, args[1:]) {
 		return
 	}
 	cmd.Run(s.p, args[1:])
