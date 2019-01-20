@@ -81,6 +81,8 @@ func (s *Shell) sortedAdd(cmd Command) {
 			return
 		}
 	}
+
+	s.cmds = append(s.cmds, cmd)
 }
 
 // hash adds references to a command by it's name and aliases.
